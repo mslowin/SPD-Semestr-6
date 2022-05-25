@@ -21,6 +21,8 @@ int main()
     int done_jobs_R[num_of_jobs];         // tablica czasow R zadan, ktore zostaly juz wykonane
     int avaliable_jobs[num_of_jobs];      // tablica zadań dostępnych w danej chwili t
     int avaliable_jobs_Q[num_of_jobs];    // tablica czasow Q zadań dostępnych w danej chwili t
+    int C[num_of_jobs];                   // tablica momentów ostygnięcia danych zadań (największe C, to Cmax)
+    int Cmax;                             // Całkowity czas uszeregowania liczony na końcu
 
     for (int i = 0; i < num_of_jobs; i++) // przypisanie kolejności 1,2,3,... do tablicy X[]
     {
@@ -38,6 +40,8 @@ int main()
 
     for(int krok = 0; krok < num_of_jobs; krok++)    // kolejnych chwil czasu jest 7 i po inich iterujemy
     {
+        cout << endl;
+        cout << "-----------------------------------" << krok << ":" << endl;
         // jesli aktualna chwila jest mniejsza od poczatku jakiegokolwiek zadania
         tmp_t = min_num_from_an_array(done_jobs_R, num_of_jobs);
         cout << "t = " << t << endl;
@@ -60,22 +64,25 @@ int main()
             if(Q[i] == max_Q)                   // najwiekszym Q
                 max_Q_index = i;                // max_Q_index to indeks zadania z najwiekszym Q, ktore dodajemy do zadan wykonanych
 
+        // cout << "dostepne zadania zaznaczone sa zerem:  (-1 <- tych jeszcze nie ma, 99 <- zakonczone)" << endl;
         for(int i = 0; i < num_of_jobs; i++)
                 cout << avaliable_jobs[i] << " ";
 
         t = t + P[max_Q_index];     // modyfikujemy czas
         X[krok] = max_Q_index;      // wrzerzucamy zadanie w kolejnosc
-        avaliable_jobs[max_Q_index] = 99;   // wykonane zadanie przyjmuje wartosc rozna od 0 i -1
-        avaliable_jobs_Q[max_Q_index] = -1;
-        done_jobs_R[max_Q_index] = 9999;
-        
-        cout << endl;
-        cout << endl;
+
+        avaliable_jobs[max_Q_index] = 99;       // wykonane zadanie przyjmuje wartosc rozna od 0 i -1
+        avaliable_jobs_Q[max_Q_index] = -1;     // czas Q wykonanego zadania zmieniamy tak, żeby nie przeszkadzał przy wyliczaniu maksymalnego Q w kolejnych krokach
+        done_jobs_R[max_Q_index] = 9999;        // czas R wykonanego zadania zmieniamy tak, żeby nie zmieścił się w warunku if(done_jobs_R[i] <= t) 
+        C[max_Q_index] = t + Q[max_Q_index];    // obliczenie C dla dodawanego zadania
     }
 
-    cout << "kolejnosc uszeregowania to: " << endl;
+    cout << endl << endl << "kolejnosc uszeregowania to: " << endl;
     for(int i = 0; i < num_of_jobs; i ++)
         cout << X[i] + 1 << " ";
+
+    Cmax = max_num_from_an_array(C, num_of_jobs);
+    cout << endl << "Cmax = " << Cmax << endl << endl;
     return 0;
 }
 
