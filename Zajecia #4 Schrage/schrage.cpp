@@ -3,9 +3,10 @@
 using namespace std;
 
 int  max_time_of_jobs(int num_of_jobs, int *R, int *P, int *Q);
+int  min_num_from_an_array(int *array, int num_of_elements);
+int  max_num_from_an_array(int *array, int num_of_elements);
 int* sort_and_return_new_array(int *R, int num_of_elements);
 int* sort_easy(int *R, int num_of_elements);
-// int  max_Q(int num_of_jobs, int *tab_RQ[2]);
 
 int main()
 {
@@ -17,45 +18,111 @@ int main()
     int pom = 0;
     int X[num_of_jobs];         // przechowywuje kolejność wykonywania się zadań
     int tab_RQ[num_of_jobs][2]; // przechowuje R i Q zadań, aby je porównać (druga tabela, kora byla na ta tablicy)
+    int done_jobs_R[num_of_jobs];         // tablica czasow R zadan, ktore zostaly juz wykonane
+    int avaliable_jobs[num_of_jobs];      // tablica zadań dostępnych w danej chwili t
+    int avaliable_jobs_Q[num_of_jobs];    // tablica czasow Q zadań dostępnych w danej chwili t
 
     for (int i = 0; i < num_of_jobs; i++) // przypisanie kolejności 1,2,3,... do tablicy X[]
+    {
         X[i] = i;
-
-    int max_time = max_time_of_jobs(num_of_jobs,R,P,Q); // dla przykładu podstawowego wynosi 250
+        done_jobs_R[i] = R[i];
+        avaliable_jobs[i] = -1;
+        avaliable_jobs_Q[i] = -1;
+    }
 
     int temp = 0;   // zmienna pomocnicza do iteracji po tablicy sortR
+    int tmp_t = 0;
+    int t = 0;
+    int max_Q = 0;
+    int max_Q_index = 0;
 
-    int *sortR = sort_and_return_new_array(R, num_of_jobs); // sortR jest tablicą zawierającą posortowane element z tablicy R
-
-    for(int t = 0; t < num_of_jobs; t++)    // kolejnych chwil czasu jest 7 i po inich iterujemy
+    for(int krok = 0; krok < num_of_jobs; krok++)    // kolejnych chwil czasu jest 7 i po inich iterujemy
     {
-        //----------
-        temp = t;       // zmienne utworzone, aby iterować jedynie po liczbach z tablicy sortR
-        t = sortR[t];   // dla przypadku podstawowego będzie 7 iteracji dla t równych 0, 10, 11, 13, 20, 30, 30
-        //----------
+        // jesli aktualna chwila jest mniejsza od poczatku jakiegokolwiek zadania
+        tmp_t = min_num_from_an_array(done_jobs_R, num_of_jobs);
+        cout << "t = " << t << endl;
+        cout << "tmp_t = " << tmp_t << endl;
+        if(t < tmp_t)  // dla podstawowego przypadku wykonuje się tylko raz miedzy t = 6 i t = 10
+            t = tmp_t;
 
-        pom = 0;
-        cout << "Wszystkie zadania, ktorych R jest miejszy od danej chwili:   (chwila = " << t << ")" << endl;
-        cout << " R\tQ" << endl;
+        for(int i = 0; i < num_of_jobs; i++)    // stprawdzamy ile jest dostepnych zadan w danej chwili t
+            if(done_jobs_R[i] <= t)             // jezeli ktorekolwiek zadanie ma R mniejsze od t zapisujemy je
+                avaliable_jobs[i] = 0;          // jezeli w danej chwili zadanie jest dostepne wstawiamy 0
+        
+        for(int i = 0; i < num_of_jobs; i++)    // w odpowiednie miejsca tabeli avaliable_jobs_Q wstawiamy czasy Q zadan
+            if(avaliable_jobs[i] == 0)          // dostepnych w danej chwili
+                avaliable_jobs_Q[i] = Q[i];
+
+        max_Q = max_num_from_an_array(avaliable_jobs_Q, num_of_jobs);
+        cout << "max_Q = " << max_Q << endl;
+
+        for(int i = 0; i < num_of_jobs; i++)    // iterujac przez wszystkie zadania sprawdzamy ktore zadanie jest tym z
+            if(Q[i] == max_Q)                   // najwiekszym Q
+                max_Q_index = i;                // max_Q_index to indeks zadania z najwiekszym Q, ktore dodajemy do zadan wykonanych
+
         for(int i = 0; i < num_of_jobs; i++)
-        {
-            if(R[i] < t)
-            {
-                tab_RQ[i][0] = R[i];
-                tab_RQ[i][1] = Q[i];
-                pom ++;                 // 7 w ostatniej iteracji
+                cout << avaliable_jobs[i] << " ";
 
-                cout << tab_RQ[i][0] << "\t" << tab_RQ[i][1] << endl;
-            }
-            // int max_Q_idx = max_Q(pom, tab_RQ);
-        }
+        t = t + P[max_Q_index];     // modyfikujemy czas
+        X[krok] = max_Q_index;      // wrzerzucamy zadanie w kolejnosc
+        avaliable_jobs[max_Q_index] = 99;   // wykonane zadanie przyjmuje wartosc rozna od 0 i -1
+        avaliable_jobs_Q[max_Q_index] = -1;
+        done_jobs_R[max_Q_index] = 9999;
+        
         cout << endl;
-
-        //----------
-        t = temp;   // powrót zmiennej t do zakresu, żeby nie była większa od num_of_jobs
-        //----------
+        cout << endl;
     }
+
+    cout << "kolejnosc uszeregowania to: " << endl;
+    for(int i = 0; i < num_of_jobs; i ++)
+        cout << X[i] + 1 << " ";
     return 0;
+}
+
+int  max_num_from_an_array(int *array, int num_of_elements)
+{
+    int *newArray = new int [num_of_elements];  // utworzenie nowej tablicy, która będzie sortowana
+    int temp = 0;
+    for(int i = 0; i < num_of_elements; i++)    // przypisanie nowej tablicy zmiennych z tablicy array
+        newArray[i] = array[i];
+    
+    for(int i = 0; i < num_of_elements; i++)
+	{		
+		for(int j = i + 1; j < num_of_elements; j++)
+		{
+			if(newArray[i] > newArray[j])
+			{
+				temp = newArray[i];
+				newArray[i] = newArray[j];
+				newArray[j] = temp;
+			}
+		}
+	}
+
+    return newArray[num_of_elements-1];
+}
+
+int  min_num_from_an_array(int *array, int num_of_elements)
+{
+    int *newArray = new int [num_of_elements];  // utworzenie nowej tablicy, która będzie sortowana
+    int temp = 0;
+    for(int i = 0; i < num_of_elements; i++)    // przypisanie nowej tablicy zmiennych z tablicy array
+        newArray[i] = array[i];
+    
+    for(int i = 0; i < num_of_elements; i++)
+	{		
+		for(int j = i + 1; j < num_of_elements; j++)
+		{
+			if(newArray[i] > newArray[j])
+			{
+				temp = newArray[i];
+				newArray[i] = newArray[j];
+				newArray[j] = temp;
+			}
+		}
+	}
+
+    return newArray[0];
 }
 
 int* sort_and_return_new_array(int *R, int num_of_elements)
@@ -94,18 +161,3 @@ int max_time_of_jobs(int num_of_jobs,int *R, int *P, int *Q)
     }
     return max_time;
 }
-
-// int max_Q(int num_of_jobs, int *tab_RQ[2])
-// {
-//   for(int i = 0; i < num_of_jobs; i++)
-//   {
-//     if(i == num_of_jobs - 1)
-//       break;
-//     else
-//     {
-//       swap(tab_RQ[i][1], tab_RQ[i+1][1]);
-//     }
-//     cout << tab_RQ[i][0] << "  " << tab_RQ[i][1] << endl;
-//   }
-//   return 1;
-// }
