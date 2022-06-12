@@ -1,0 +1,32 @@
+-------------------------------------------------------------------------------
+ocena 2.5:
+  - Carlier-o podobny który błednie liczy (lub zgłasza błąd) 
+    conajwyżej 50% przykładów błędnych,
+-------------------------------------------------------------------------------
+ocena 3.0: 
+  - Carlier-o podobny algorytm (może być rekurencyjny),
+-------------------------------------------------------------------------------
+ocena 3.5:
+  - Carlier-o podobny algorytm (może być rekurencyjny),
+  - dodatkowe testy eliminacyjne,
+-------------------------------------------------------------------------------
+ocena 4.0:
+  - Carlier-o podobny algorytm,
+  - z właściwą startegią przeglądania,
+  - sprawozdanie "wpływ strategi przeglądania na efektywność pracy algorytmu",
+-------------------------------------------------------------------------------
+ocena 4.5:
+  - Carlier z
+  - dodatkowymi testami eliminacyjnymi,
+  - i właściwą strategią przeglądania,
+  - sprawozdanie "wpływ strategii przeglądania i dodatkowych testów,
+    eliminacyjnych na efektywność pracy algorytmu",
+-------------------------------------------------------------------------------
+ocena: 5.0:
+  - Carlier z 
+  - dodatkowymi testami eliminacyjnymi,
+  - i właściwą strategią przeglądania,
+  - podproblemy odkładane są na kopcu,
+  - sprawozdanie "wpływ strategii przeglądania i dodatkowych testów 
+    eliminacyjnych na efektywność pracy algorytmu".
+-------------------------------------------------------------------------------
