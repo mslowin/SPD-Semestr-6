@@ -11,6 +11,8 @@ int* sort_and_return_new_array      (int *R, int num_of_elements);
 int  schrage                        (const int num_of_jobs, int *R, int *P, int *Q);
 int  schragePodzial                 (const int num_of_jobs, int *R, int *P, int *Q);
 bool czy_wszystkie_zadania_wykonane (const int num_of_jobs, int *avaliable_jobs);
+void jobs_avaliable_at_specific_time(int t, const int num_of_jobs, int *done_jobs_R, int *R);
+int  second_min_num_from_an_array   (int *array, int num_of_elements);
 
 int main()
 {
@@ -25,14 +27,19 @@ int main()
     int P[100];
     int Q[100];
     int X[100];
+    // //  X   = { 0, 1, 2, 3, 4, 5, 6}
+    // int R[] = {10,13,11,20,30, 0,30};
+    // int P[] = { 5, 6, 7, 4, 3, 6, 2};
+    // int Q[] = { 7,26,24,21, 8,17, 0};
 
-    for(int i = 1; i < 2; i++) //petla for sluzaca do przemieszczania sie pomiedzy ośmioma zbiorami danych
+    for(int i = 0; i < 9; i++) //petla for sluzaca do przemieszczania sie pomiedzy ośmioma zbiorami danych
     {
         while(tmp != s[i]) 
             data >> tmp; 
         data >> N;
         for (int j = 0; j < N; j++)
             data >> R[j] >> P[j] >> Q[j];
+        // N = 7;
 
         const int num_of_jobs = sizeof(R)/sizeof(R[0]);   // dla przykładu podstawowego wynosi 7
 
@@ -75,16 +82,33 @@ int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q)
     while(czy_wszystkie_zadania_wykonane(num_of_jobs, avaliable_jobs) == false)
     // for(int krok = 0; krok < N; krok++)    // kolejnych chwil czasu jest 7 i po inich iterujemy
     {
-        cout << endl;    
-        cout << "-----------------------------------" << krok << ":" << endl;
+        // cout << endl;    
+        // cout << "-----------------------------------" << krok << ":" << endl;
 
-        tmp_t = min_num_from_an_array(done_jobs_R, N);
+        // cout << "------->" << t_next << endl;
+        // jobs_avaliable_at_specific_time(t_next, N, done_jobs_R, R);
+
         // cout << "t = " << t << endl;
         // cout << "tmp_t = " << tmp_t << endl;
 
-        // jesli aktualna chwila jest mniejsza od poczatku jakiegokolwiek zadania
-        if(t < tmp_t)  // dla podstawowego przypadku wykonuje się tylko raz miedzy t = 6 i t = 10
-            t = tmp_t;
+        // tmp_t = min_num_from_an_array(done_jobs_R, N);
+
+        if(krok == 0)
+            t_next = 999;
+        else
+        {
+            t_next = min_num_from_an_array(done_jobs_R, N);
+            // jesli aktualna chwila jest mniejsza od poczatku jakiegokolwiek zadania
+                // cout << "--- " << t << endl;
+                // cout << "--- " << t_next << endl;
+            if(t < t_next)  // dla podstawowego przypadku wykonuje się tylko raz miedzy t = 6 i t = 10
+            {
+                t = t_next;
+                t_next = second_min_num_from_an_array(done_jobs_R, N);
+                // cout << "------- " << t_next << endl;
+            }
+        }
+        
 
         for(int i = 0; i < N; i++)    // stprawdzamy ile jest dostepnych zadan w danej chwili t
             if(done_jobs_R[i] <= t)             // jezeli ktorekolwiek zadanie ma R mniejsze od t zapisujemy je
@@ -96,11 +120,9 @@ int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q)
 
         max_Q = max_num_from_an_array(avaliable_jobs_Q, N);
         // cout << "max_Q = " << max_Q << endl;
-        t_next = min_num_from_an_array(done_jobs_R, N);
-        cout << "t_next = " << max_Q << endl;
 
-        for(int i = 0; i < N; i++)              // iterujac przez wszystkie dostępne zadania sprawdzamy ktore zadanie jest tym z
-            cout << done_jobs_R[i] << " " ;
+        // for(int i = 0; i < N; i++)              
+        //     cout << done_jobs_R[i] << " " ;
 
         for(int i = 0; i < N; i++)              // iterujac przez wszystkie dostępne zadania sprawdzamy ktore zadanie jest tym z
             if(avaliable_jobs_Q[i] == max_Q)    // najwiekszym Q
@@ -108,18 +130,38 @@ int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q)
                 max_Q_index = i;                // max_Q_index to indeks zadania z najwiekszym Q, ktore dodajemy do zadan wykonanych
                 break;
             }
+
+        
+        // cout << endl << "t_next = " << t_next << endl;
+        // cout << "t = " << t << endl;
+        // cout << "P = " << P[max_Q_index] << endl;
+
+        if(t_next < t + P[max_Q_index])
+        {
+            done_jobs_R[max_Q_index] = 9999;
+            P[max_Q_index] = P[max_Q_index] - (t_next - t);
+            t = t_next;
+        }
+        if(t_next >= t + P[max_Q_index])
+        {
+            // cout << "HELLO" << endl;
+            t = t + P[max_Q_index];
+            // avaliable_jobs[max_Q_index] = 99;       // wykonane zadanie przyjmuje wartosc rozna od 0 i -1
+            // avaliable_jobs_Q[max_Q_index] = -1;     // czas Q wykonanego zadania zmieniamy tak, żeby nie przeszkadzał przy wyliczaniu maksymalnego Q w kolejnych krokach
+            done_jobs_R[max_Q_index] = 9999;        // czas R wykonanego zadania zmieniamy tak, żeby nie zmieścił się w warunku if(done_jobs_R[i] <= t) 
+            // C[max_Q_index] = t + Q[max_Q_index];    // obliczenie C dla dodawanego zadania
+        }
         
         // cout << "dostepne zadania zaznaczone sa zerem:  (-1 <- tych jeszcze nie ma, 99 <- zakonczone)" << endl;
         // for(int i = 0; i < N; i++)
         //         cout << avaliable_jobs[i] << " ";
-        
-        // t++;
-        t = t + P[max_Q_index];     // modyfikujemy czas
-        X[krok] = max_Q_index;      // wrzerzucamy zadanie w kolejnosc
+
+        // t = t + P[max_Q_index];     // modyfikujemy czas
+        // X[krok] = max_Q_index;      // wrzerzucamy zadanie w kolejnosc
 
         avaliable_jobs[max_Q_index] = 99;       // wykonane zadanie przyjmuje wartosc rozna od 0 i -1
         avaliable_jobs_Q[max_Q_index] = -1;     // czas Q wykonanego zadania zmieniamy tak, żeby nie przeszkadzał przy wyliczaniu maksymalnego Q w kolejnych krokach
-        done_jobs_R[max_Q_index] = 9999;        // czas R wykonanego zadania zmieniamy tak, żeby nie zmieścił się w warunku if(done_jobs_R[i] <= t) 
+        // done_jobs_R[max_Q_index] = 9999;        // czas R wykonanego zadania zmieniamy tak, żeby nie zmieścił się w warunku if(done_jobs_R[i] <= t) 
         C[max_Q_index] = t + Q[max_Q_index];    // obliczenie C dla dodawanego zadania
         krok++;
     }
@@ -132,13 +174,26 @@ int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q)
     // cout << endl << "Cmax = " << Cmax << endl << endl;
 
     delete[] X;
-    delete[] tab_RQ;
     delete[] done_jobs_R;
     delete[] avaliable_jobs;
     delete[] avaliable_jobs_Q;
     delete[] C;
 
     return Cmax;
+}
+
+void jobs_avaliable_at_specific_time(int t, const int num_of_jobs, int *done_jobs_R, int *R)
+{
+    int* jobs_avaliable_now = new int [num_of_jobs];
+
+    for(int i = 0; i < num_of_jobs; i++)
+    {
+        jobs_avaliable_now[i] = 0;
+        if(t == done_jobs_R[i])
+            jobs_avaliable_now[i] = 1;
+        cout << jobs_avaliable_now[i] << " ";
+    }
+    cout << endl;
 }
 
 bool czy_wszystkie_zadania_wykonane (const int num_of_jobs, int *avaliable_jobs) 
@@ -255,6 +310,29 @@ int  max_num_from_an_array(int *array, int num_of_elements)
 	}
 
     return newArray[num_of_elements-1];
+}
+
+int  second_min_num_from_an_array(int *array, int num_of_elements)
+{
+    int *newArray = new int [num_of_elements];  // utworzenie nowej tablicy, która będzie sortowana
+    int temp = 0;
+    for(int i = 0; i < num_of_elements; i++)    // przypisanie nowej tablicy zmiennych z tablicy array
+        newArray[i] = array[i];
+    
+    for(int i = 0; i < num_of_elements; i++)
+	{		
+		for(int j = i + 1; j < num_of_elements; j++)
+		{
+			if(newArray[i] > newArray[j])
+			{
+				temp = newArray[i];
+				newArray[i] = newArray[j];
+				newArray[j] = temp;
+			}
+		}
+	}
+
+    return newArray[1];
 }
 
 int  min_num_from_an_array(int *array, int num_of_elements)
