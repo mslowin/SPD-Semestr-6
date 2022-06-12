@@ -40,10 +40,11 @@ int main()
         for (int j = 0; j < N; j++)
             data >> R[j] >> P[j] >> Q[j];
         // N = 7;
-
         const int num_of_jobs = sizeof(R)/sizeof(R[0]);   // dla przykładu podstawowego wynosi 7
-
         int Cmax;
+        int LB;     // dolne ograniczenie
+        int UB;     // gorne ograniczenie
+        
         Cmax = schragePodzial(N, R, P, Q);
         cout << endl << "Cmax = " << Cmax << endl << endl;
     }
