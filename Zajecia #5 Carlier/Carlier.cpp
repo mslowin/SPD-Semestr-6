@@ -9,11 +9,11 @@ int  min_num_from_an_array          (int *array, int num_of_elements);
 int  max_num_from_an_array          (int *array, int num_of_elements);
 int* sort_and_return_new_array      (int *R, int num_of_elements);
 int  schrage                        (const int num_of_jobs, int *R, int *P, int *Q, int *X);
-int  schragePodzial                 (const int num_of_jobs, int *R, int *P, int *Q, int *X);
+int  schragePodzial                 (const int num_of_jobs, int *R, int P[100], int *Q, int *X);
 bool are_all_jobs_finished          (const int num_of_jobs, int *avaliable_jobs);
 void jobs_avaliable_at_specific_time(int t, const int num_of_jobs, int *done_jobs_R, int *R);
 int  second_min_num_from_an_array   (int *array, int num_of_elements);
-bool check_if_block_exists          ();
+void check_block                    (const int num_of_jobs, int* R, int* P, int* Q, int* X, int& newI, int& newR, int& newQ);
 void carlier                        (const int num_of_jobs, int* R, int* P, int* Q, int* X, int& UB);
 
 
@@ -35,7 +35,7 @@ int main()
     // int P[] = { 5, 6, 7, 4, 3, 6, 2};
     // int Q[] = { 7,26,24,21, 8,17, 0};
 
-    for(int i = 3; i < 4; i++) //petla for sluzaca do przemieszczania sie pomiedzy ośmioma zbiorami danych
+    for(int i = 1; i < 2; i++) //petla for sluzaca do przemieszczania sie pomiedzy ośmioma zbiorami danych
     {
         cout << endl << "----------------------data.00" << i << endl;
         while(tmp != s[i]) 
@@ -55,7 +55,7 @@ int main()
 		cout << "schrage: " << UB << endl;
         carlier(N, R, P, Q, X, UB);
 		cout << "Schrage z podzialem: " << schragePodzial(N, R, P, Q, X) << endl;
-		cout << "Carlier: " << UB << endl;  // wynikiem algorytmu Carliera jest najnizsza wartosc UB
+		cout << "Carlier: " << UB << endl;
 
         for(int i = 0; i < N; i++)
         {
@@ -70,10 +70,50 @@ int main()
     return 0;
 }
 
-bool check_if_block_exists()
+void check_block(const int num_of_jobs, int* R, int* P, int* Q, int* X, int& newI, int& newR, int& newQ)
 {
-    // TODO
-    return true;
+    int Cmax = 0;
+	int placeB = -100; // pozycja zadania B w bloku krytycznym
+    int length_m = 0;  // dlugosc uszeregowania zadan bez Q (pierwsze R + P poszczegolnych zadan)
+	int tab_pom[100];
+
+    // sprawdzenie dlugosci bloku krytycznego
+	for(int i = 0; i < num_of_jobs; i++) // petla iterujaca po wszystkich zadaniach
+	{
+		int j = X[i];         // przypisanie kolejnosci zadan   
+        if(length_m >= R[j])
+            tab_pom[i] = 1;   // dzieki tab_pom mozna rozroznic bloki krytyczne jako jedynki oddzielone od siebie zerami
+        else
+            tab_pom[i] = 0;   // jesli konczy sie blok krytyczny (np przerwa na maszynie) to wstawiamy 0
+        
+		length_m = P[j] + max(length_m, R[j]); // aktualizacja dlugosci length_m
+
+		if(Cmax < length_m + Q[j]) {    // jesli Cmax odcinka jest mniejszy od length_m + Q, czyli jesli nie skonczyl sie blok krytyczny
+			placeB = i;                 // miejsce zadania konczacego blok przesuwana jest dalej
+            Cmax = length_m + Q[j];     // Cmax dla pewnej dlugosci uszeregowania zadan
+		}
+	}
+
+	int i = placeB;             // indeks zadania konczacego blok krytyczny
+    int j = -1;                 // wyzerowanie kolejnosci
+	int zadB_R = R[X[placeB]];  // czas przybycia ostatniego zadania z bloku
+	int zadB_P = P[X[placeB]];  // czas wykonania ostatniego zadania z bloku
+	int zadB_Q = Q[X[placeB]];  // czas stygniecia ostatniego zadania z bloku
+
+	while(tab_pom[i])   // wykonuj zawsze, jesli istnieje blok krytyczny
+	{
+		if(Q[X[--i]] < zadB_Q) // pierwsze zadanie poprzedzajace zadB, ktore ma mniejsze Q niz zadB, konczy blok od przodu
+		{
+			j = X[i];   // miejsce, w korym zaczyna sie blok krytyczny
+			break;
+		}
+		zadB_R = min(zadB_R, R[X[i]]); // aktualizacja R bloku
+		zadB_P += P[X[i]];             // aktualizacja P bloku            
+	}
+    // stworzenie nowych problemow - nowych wezlow
+	newI = j;                 // indeks zadania rozpoczynajacego blok
+	newR = zadB_R + zadB_P;   // nowa wartosc R (np. na slajdach z 10 zrobilo sie 28)
+	newQ = zadB_Q + zadB_P;   // nowa wartosc Q (np. na slajdach wezel 3 - newQ = 38)
 }
 
 void carlier(const int num_of_jobs, int* R, int* P, int* Q, int* X, int& UB)
@@ -82,28 +122,27 @@ void carlier(const int num_of_jobs, int* R, int* P, int* Q, int* X, int& UB)
     {                                                  // lub rowna gornej granicy, to wychodzimy z funkcji
 
         int U = schrage(num_of_jobs, R, P, Q, X);  // liczymy nowy Cmax ze schrage
-        cout << "schrage = " << U << endl;
-        cout << "Upper Bound = " << UB << endl;
         if (U < UB)     // jesli schrage zwroci wartosc mniejsza niz aktualne UB
             UB = U;     // to zmniejszamy UB (upper bound) - bedzie to rowniez wynik algorytmu
-
-        int tmp, tmpr, tmpq;
         
-        if(check_if_block_exists()) // jesli istnieje blok krytyczny
+        int new_index, new_r, new_q;
+        check_block(num_of_jobs, R, P, Q, X, new_index, new_r, new_q);
+
+        if(new_index > 0) // jesli istnieje blok krytyczny
         {
-            int pomR = R[tmp]; // zmienne pomocnicze do przechowywania 
-            int pomQ = Q[tmp]; // wartosci orginalnych R i Q
-            R[tmp] = tmpr;       // chwilowa zamiana czasu dostarczenia R, zeby sprawdzic wezel dla nowego R 
+            int pomR = R[new_index];   // zmienne pomocnicze do przechowywania 
+            int pomQ = Q[new_index];   // wartosci orginalnych R i Q
+            R[new_index] = new_r;      // chwilowa zamiana czasu dostarczenia R, zeby sprawdzic wezel dla nowego R 
             carlier(num_of_jobs, R, P, Q, X, UB);
-            R[tmp] = pomR;     // powrot do wczesniejszego R
-            Q[tmp] = tmpq;       // chwilowa zmiana czasu stygniecia Q, zeby sprawdzic wezel dla nowego Q
+            R[new_index] = pomR;       // powrot do wczesniejszego R
+            Q[new_index] = new_q;      // chwilowa zmiana czasu stygniecia Q, zeby sprawdzic wezel dla nowego Q
             carlier(num_of_jobs, R, P, Q, X, UB);
-            Q[tmp] = pomQ;     // powrot do wczesniejszego Q
+            Q[new_index] = pomQ;       // powrot do wczesniejszego Q
         }
     }
 }
 
-int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q, int *X)
+int  schragePodzial(const int num_of_jobs, int *R, int P[100], int *Q, int *X)
 {
     int* done_jobs_R = new int [num_of_jobs];
     int* avaliable_jobs = new int [num_of_jobs];
