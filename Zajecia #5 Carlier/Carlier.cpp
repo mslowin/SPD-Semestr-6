@@ -8,18 +8,21 @@ int  max_time_of_jobs               (int num_of_jobs, int *R, int *P, int *Q);
 int  min_num_from_an_array          (int *array, int num_of_elements);
 int  max_num_from_an_array          (int *array, int num_of_elements);
 int* sort_and_return_new_array      (int *R, int num_of_elements);
-int  schrage                        (const int num_of_jobs, int *R, int *P, int *Q);
-int  schragePodzial                 (const int num_of_jobs, int *R, int *P, int *Q);
-bool czy_wszystkie_zadania_wykonane (const int num_of_jobs, int *avaliable_jobs);
+int  schrage                        (const int num_of_jobs, int *R, int *P, int *Q, int *X);
+int  schragePodzial                 (const int num_of_jobs, int *R, int *P, int *Q, int *X);
+bool are_all_jobs_finished          (const int num_of_jobs, int *avaliable_jobs);
 void jobs_avaliable_at_specific_time(int t, const int num_of_jobs, int *done_jobs_R, int *R);
 int  second_min_num_from_an_array   (int *array, int num_of_elements);
+bool check_if_block_exists          ();
+void carlier                        (const int num_of_jobs, int* R, int* P, int* Q, int* X, int& UB);
+
 
 int main()
 {
     string s[9] = { "data.000:","data.001:","data.002:","data.003:","data.004:",
         "data.005:","data.006:","data.007:","data.008:" };
     string tmp; 
-    ifstream data("schr.data.txt");
+    ifstream data("data.txt");
     // ifstream data("carl.data\\carl.data.txt");
 
     int N;
@@ -27,35 +30,81 @@ int main()
     int P[100];
     int Q[100];
     int X[100];
-    // //  X   = { 0, 1, 2, 3, 4, 5, 6}
+    //  X   = { 0, 1, 2, 3, 4, 5, 6}
     // int R[] = {10,13,11,20,30, 0,30};
     // int P[] = { 5, 6, 7, 4, 3, 6, 2};
     // int Q[] = { 7,26,24,21, 8,17, 0};
 
-    for(int i = 0; i < 9; i++) //petla for sluzaca do przemieszczania sie pomiedzy ośmioma zbiorami danych
+    for(int i = 3; i < 4; i++) //petla for sluzaca do przemieszczania sie pomiedzy ośmioma zbiorami danych
     {
+        cout << endl << "----------------------data.00" << i << endl;
         while(tmp != s[i]) 
             data >> tmp; 
         data >> N;
         for (int j = 0; j < N; j++)
-            data >> R[j] >> P[j] >> Q[j];
+        {
+            data >> R[j] >> P[j] >> Q[j];   // czytanie danych z pliku
+        }
         // N = 7;
-        const int num_of_jobs = sizeof(R)/sizeof(R[0]);   // dla przykładu podstawowego wynosi 7
+
         int Cmax;
         int LB;     // dolne ograniczenie
         int UB;     // gorne ograniczenie
         
-        Cmax = schragePodzial(N, R, P, Q);
-        cout << endl << "Cmax = " << Cmax << endl << endl;
+        UB = schrage(N, R, P, Q, X);       // gorne ograniczenie to wynik schrage, bo nie moze byc gorzej od tego
+		cout << "schrage: " << UB << endl;
+        carlier(N, R, P, Q, X, UB);
+		cout << "Schrage z podzialem: " << schragePodzial(N, R, P, Q, X) << endl;
+		cout << "Carlier: " << UB << endl;  // wynikiem algorytmu Carliera jest najnizsza wartosc UB
+
+        for(int i = 0; i < N; i++)
+        {
+            X[i] = 0;
+            R[i] = 0;
+            P[i] = 0;
+            Q[i] = 0;
+        }
     }
 
+    cout << endl;
     return 0;
 }
 
-int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q)
+bool check_if_block_exists()
 {
-    int* X = new int [num_of_jobs];
-    int* tab_RQ = new int [num_of_jobs];
+    // TODO
+    return true;
+}
+
+void carlier(const int num_of_jobs, int* R, int* P, int* Q, int* X, int& UB)
+{
+    if(schragePodzial(num_of_jobs, R, P, Q, X) < UB)  // jesli schrage z podzialem zwroci wartosc wieksza 
+    {                                                  // lub rowna gornej granicy, to wychodzimy z funkcji
+
+        int U = schrage(num_of_jobs, R, P, Q, X);  // liczymy nowy Cmax ze schrage
+        cout << "schrage = " << U << endl;
+        cout << "Upper Bound = " << UB << endl;
+        if (U < UB)     // jesli schrage zwroci wartosc mniejsza niz aktualne UB
+            UB = U;     // to zmniejszamy UB (upper bound) - bedzie to rowniez wynik algorytmu
+
+        int tmp, tmpr, tmpq;
+        
+        if(check_if_block_exists()) // jesli istnieje blok krytyczny
+        {
+            int pomR = R[tmp]; // zmienne pomocnicze do przechowywania 
+            int pomQ = Q[tmp]; // wartosci orginalnych R i Q
+            R[tmp] = tmpr;       // chwilowa zamiana czasu dostarczenia R, zeby sprawdzic wezel dla nowego R 
+            carlier(num_of_jobs, R, P, Q, X, UB);
+            R[tmp] = pomR;     // powrot do wczesniejszego R
+            Q[tmp] = tmpq;       // chwilowa zmiana czasu stygniecia Q, zeby sprawdzic wezel dla nowego Q
+            carlier(num_of_jobs, R, P, Q, X, UB);
+            Q[tmp] = pomQ;     // powrot do wczesniejszego Q
+        }
+    }
+}
+
+int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q, int *X)
+{
     int* done_jobs_R = new int [num_of_jobs];
     int* avaliable_jobs = new int [num_of_jobs];
     int* avaliable_jobs_Q = new int [num_of_jobs];
@@ -72,27 +121,16 @@ int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q)
         avaliable_jobs_Q[i] = -1;
     }
 
-    int temp = 0;   // zmienna pomocnicza do iteracji po tablicy sortR
-    int tmp_t = 0;
     int t = 0;
     int max_Q = 0;
     int t_next;
     int max_Q_index = 0;
     int krok = 0;
 
-    while(czy_wszystkie_zadania_wykonane(num_of_jobs, avaliable_jobs) == false)
-    // for(int krok = 0; krok < N; krok++)    // kolejnych chwil czasu jest 7 i po inich iterujemy
+    while(are_all_jobs_finished(num_of_jobs, avaliable_jobs) == false)
     {
         // cout << endl;    
         // cout << "-----------------------------------" << krok << ":" << endl;
-
-        // cout << "------->" << t_next << endl;
-        // jobs_avaliable_at_specific_time(t_next, N, done_jobs_R, R);
-
-        // cout << "t = " << t << endl;
-        // cout << "tmp_t = " << tmp_t << endl;
-
-        // tmp_t = min_num_from_an_array(done_jobs_R, N);
 
         if(krok == 0)
             t_next = 999;
@@ -100,8 +138,6 @@ int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q)
         {
             t_next = min_num_from_an_array(done_jobs_R, N);
             // jesli aktualna chwila jest mniejsza od poczatku jakiegokolwiek zadania
-                // cout << "--- " << t << endl;
-                // cout << "--- " << t_next << endl;
             if(t < t_next)  // dla podstawowego przypadku wykonuje się tylko raz miedzy t = 6 i t = 10
             {
                 t = t_next;
@@ -109,7 +145,6 @@ int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q)
                 // cout << "------- " << t_next << endl;
             }
         }
-        
 
         for(int i = 0; i < N; i++)    // stprawdzamy ile jest dostepnych zadan w danej chwili t
             if(done_jobs_R[i] <= t)             // jezeli ktorekolwiek zadanie ma R mniejsze od t zapisujemy je
@@ -131,7 +166,6 @@ int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q)
                 max_Q_index = i;                // max_Q_index to indeks zadania z najwiekszym Q, ktore dodajemy do zadan wykonanych
                 break;
             }
-
         
         // cout << endl << "t_next = " << t_next << endl;
         // cout << "t = " << t << endl;
@@ -157,9 +191,6 @@ int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q)
         // for(int i = 0; i < N; i++)
         //         cout << avaliable_jobs[i] << " ";
 
-        // t = t + P[max_Q_index];     // modyfikujemy czas
-        // X[krok] = max_Q_index;      // wrzerzucamy zadanie w kolejnosc
-
         avaliable_jobs[max_Q_index] = 99;       // wykonane zadanie przyjmuje wartosc rozna od 0 i -1
         avaliable_jobs_Q[max_Q_index] = -1;     // czas Q wykonanego zadania zmieniamy tak, żeby nie przeszkadzał przy wyliczaniu maksymalnego Q w kolejnych krokach
         // done_jobs_R[max_Q_index] = 9999;        // czas R wykonanego zadania zmieniamy tak, żeby nie zmieścił się w warunku if(done_jobs_R[i] <= t) 
@@ -174,7 +205,6 @@ int  schragePodzial(const int num_of_jobs, int *R, int *P, int *Q)
     Cmax = max_num_from_an_array(C, N);
     // cout << endl << "Cmax = " << Cmax << endl << endl;
 
-    delete[] X;
     delete[] done_jobs_R;
     delete[] avaliable_jobs;
     delete[] avaliable_jobs_Q;
@@ -197,7 +227,7 @@ void jobs_avaliable_at_specific_time(int t, const int num_of_jobs, int *done_job
     cout << endl;
 }
 
-bool czy_wszystkie_zadania_wykonane (const int num_of_jobs, int *avaliable_jobs) 
+bool are_all_jobs_finished (const int num_of_jobs, int *avaliable_jobs) 
 {
     int licznik = 0;
     for(int i = 0; i < num_of_jobs; i++)
@@ -212,10 +242,8 @@ bool czy_wszystkie_zadania_wykonane (const int num_of_jobs, int *avaliable_jobs)
     return false;
 }
 
-int  schrage(const int num_of_jobs, int *R, int *P, int *Q)
+int  schrage(const int num_of_jobs, int *R, int *P, int *Q, int *X)
 {
-    int* X = new int [num_of_jobs];
-    int* tab_RQ = new int [num_of_jobs];
     int* done_jobs_R = new int [num_of_jobs];
     int* avaliable_jobs = new int [num_of_jobs];
     int* avaliable_jobs_Q = new int [num_of_jobs];
@@ -232,7 +260,6 @@ int  schrage(const int num_of_jobs, int *R, int *P, int *Q)
         avaliable_jobs_Q[i] = -1;
     }
 
-    int temp = 0;   // zmienna pomocnicza do iteracji po tablicy sortR
     int tmp_t = 0;
     int t = 0;
     int max_Q = 0;
@@ -280,8 +307,7 @@ int  schrage(const int num_of_jobs, int *R, int *P, int *Q)
         Cmax = max_num_from_an_array(C, N);
         // cout << endl << "Cmax = " << Cmax << endl << endl;
 
-    delete[] X;
-    delete[] tab_RQ;
+    // delete[] X;
     delete[] done_jobs_R;
     delete[] avaliable_jobs;
     delete[] avaliable_jobs_Q;
